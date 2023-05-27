@@ -115,7 +115,7 @@ public class UserControllerTest {
                     .contentType("application/json").content(json))
                     .andDo(print())
                     .andExpect(status().is(406))
-                    .andExpect(content().string("Este correo ya esta registrado"));
+                    .andExpect(content().string("Ya existe un usuario con el correo"));
     }               
 
     @Test
