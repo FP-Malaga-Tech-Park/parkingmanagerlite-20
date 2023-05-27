@@ -50,7 +50,7 @@ public class UserController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("userDao",userDao);
             addRoleSelectList(model);
-            return "user/createForm";
+            return "user/createform";
         }
         
         try {

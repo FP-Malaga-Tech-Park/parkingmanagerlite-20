@@ -13,3 +13,9 @@ docker-compose build .
 docker-compose up -d
 
 Si todo va bien la aplicación servirá en el puerto 8080
+
+### Pruebas
+mvn test lanzará todas las pruebas del proyecto
+#### Integración
+Contiene pruebas de integración con Selenium para la funcionalidad de usuarios
+

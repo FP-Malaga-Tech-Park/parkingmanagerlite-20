@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public class UserDao {
     @Email(message = "El formato del corrreo no es aducado")
-    @NotBlank(message = "El correo noo puede ser vacio")
+    @NotBlank(message = "El correo es obligatorio")
     private String email;
     @NotBlank(message = "El nombre es obligatorio")
     private String name;

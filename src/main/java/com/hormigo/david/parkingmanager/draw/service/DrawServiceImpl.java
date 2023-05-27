@@ -20,8 +20,7 @@ public class DrawServiceImpl implements DrawService{
 
     @Override
     public Draw getLastDrawed() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getLastDrawed'");
+        return null;
     }
 
     @Override
