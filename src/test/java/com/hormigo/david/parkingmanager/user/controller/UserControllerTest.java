@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
 import java.util.Optional;
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -47,4 +48,31 @@ public class UserControllerTest {
                     
 
     }
+
+    @Test
+    public void testSomeUserRead() throws Exception{
+        ObjectMapper mapper = new ObjectMapper();
+        ArrayList<User> listaUsuarios = new ArrayList<>();
+        listaUsuarios.add(new User("dhorram948@g.educaand.es","David  ","Hormigo","Ramírez",Role.PROFESSOR));
+        listaUsuarios.add(new User("jorge@correo.com","Jorge", "Reina", "Romero", Role.PROFESSOR));
+        String json = mapper.writeValueAsString(listaUsuarios);
+        json = "{ \"_embedded\": {\"userList\":" + json + "}}";
+        when(userService.getAll()).thenReturn(listaUsuarios);
+        this.mockMvc.perform(get("/api/users"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(json));
+
+    }
+
+    @Test
+    public void testUserDelete() throws Exception{
+
+        User user = new User("jorge@correo.com","Jorge", "Reina", "Romero", Role.PROFESSOR);
+        this.mockMvc.perform(get("/api/users"))
+                    .andDo(print())
+                    .andExpect(status().isNoContent());
+
+    }
+
 }
