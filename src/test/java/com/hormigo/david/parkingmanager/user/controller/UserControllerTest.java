@@ -11,19 +11,24 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hormigo.david.parkingmanager.core.exceptions.UserExistsException;
 import com.hormigo.david.parkingmanager.user.domain.Role;
 import com.hormigo.david.parkingmanager.user.domain.User;
+import com.hormigo.david.parkingmanager.user.domain.UserDao;
 import com.hormigo.david.parkingmanager.user.service.UserService;
 import com.hormigo.david.parkingmanager.user.service.UserServiceImpl;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,6 +39,17 @@ public class UserControllerTest {
     @MockBean
     private UserService userService;
 
+    @Test
+    public void testPositive() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        UserDao dao = new UserDao("da@correo.es", "David", "Hormigo", "Ramírez", Role.PROFESSOR);
+        String json = mapper.writeValueAsString(dao);
+        when(this.userService.register(any(UserDao.class))).thenReturn(new User("da@correo.es","David","Hormigo","Ramírez",Role.PROFESSOR));
+        this.mockMvc.perform(post("/api/users")
+                    .contentType("application/json").content(json))
+                    .andDo(print())
+                    .andExpect(status().isCreated());
+    }
 
     @Test
     public void testSingleUserRead() throws Exception{
@@ -69,10 +85,83 @@ public class UserControllerTest {
     public void testUserDelete() throws Exception{
 
         User user = new User("jorge@correo.com","Jorge", "Reina", "Romero", Role.PROFESSOR);
-        this.mockMvc.perform(get("/api/users"))
+        when(userService.getUser(3)).thenReturn(Optional.of(user));
+        this.mockMvc.perform(delete("/api/users/3"))
                     .andDo(print())
-                    .andExpect(status().isNoContent());
+                    .andExpect(status().is(204));
 
+    }
+
+    @Test
+    public void createUserEmailEmpty() throws Exception{
+        ObjectMapper mapper = new ObjectMapper();
+        User user = new User("","Jorge", "Reina", "Romero", Role.PROFESSOR);        
+        String json = mapper.writeValueAsString(user);
+        when(userService.register(any(UserDao.class))).thenReturn(null);
+        this.mockMvc.perform(post("/api/users")
+                    .contentType("application/json").content(json))
+                    .andDo(print())
+                    .andExpect(status().is(422))
+                    .andExpect(content().string("El correo es obligatorio\n"));
+    }
+
+    @Test
+    public void createRepeatedEmailUser() throws Exception{
+        ObjectMapper mapper = new ObjectMapper();
+        User user = new User("jorge@correo.com","Jorge", "Reina", "Romero", Role.PROFESSOR);        
+        String json = mapper.writeValueAsString(user);
+        when(userService.register(any(UserDao.class))).thenThrow(UserExistsException.class);
+        this.mockMvc.perform(post("/api/users")
+                    .contentType("application/json").content(json))
+                    .andDo(print())
+                    .andExpect(status().is(406))
+                    .andExpect(content().string("Este correo ya esta registrado"));
+    }               
+
+    @Test
+    public void createUserNameEmpty() throws Exception{
+        ObjectMapper mapper = new ObjectMapper();
+        User user = new User("jorge@correo.com","", "Reina", "Romero", Role.PROFESSOR);        
+        String json = mapper.writeValueAsString(user);
+        when(this.userService.register(any(UserDao.class))).thenReturn(null);
+        this.mockMvc.perform(post("/api/users")
+                    .contentType("application/json").content(json))
+                    .andDo(print())
+                    .andExpect(status().is(422))
+                    .andExpect(content().string("El nombre es obligatorio\n"));
+    }
+
+    @Test
+    public void createUserLastNameEmpty() throws Exception{
+        ObjectMapper mapper = new ObjectMapper();
+        User user = new User("jorge@correo.com","Jorge", "", "Romero", Role.PROFESSOR);        
+        String json = mapper.writeValueAsString(user);
+        when(this.userService.register(any(UserDao.class))).thenReturn(null);
+        this.mockMvc.perform(post("/api/users")
+                    .contentType("application/json").content(json))
+                    .andDo(print())
+                    .andExpect(status().is(422))
+                    .andExpect(content().string("El primer apellido es obligatorio\n"));
+    }
+
+    @Test
+    public void testModifyUser() throws Exception {
+
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> hashMap = new HashMap<>();
+        User user = new User("jorge@correo.com","Jorge", "Reina", "Romero", Role.PROFESSOR);
+
+        hashMap.put("name", "David");
+        hashMap.put("lastName1", "Reina");
+        hashMap.put("lastName2", "Romero");
+
+        String json = mapper.writeValueAsString(user);
+        String updateJson = mapper.writeValueAsString(hashMap);
+        when(userService.updateUser(2,hashMap)).thenReturn(user);
+        this.mockMvc.perform(patch("/api/users/2").content(updateJson))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().json(json));
     }
 
 }
